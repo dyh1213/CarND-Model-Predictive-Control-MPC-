@@ -7,7 +7,7 @@ A rule based target speed algorithm calculates the complexity of an upcoming tur
 
 My ouput console lists 3 parameters.
 
-* The Turn_Complexity which targets the following velocities in the MPC-Project/pull/3
+* The Turn_Complexity which targets the following velocities in the MPC
 
     ```
 	double targetV;
@@ -36,6 +36,12 @@ My ouput console lists 3 parameters.
 * The throttle which fluctuates between 1 and -1
 
 * The angle
+
+In the example below one can see that the turn complexity spikes up priot to the curve, with the MOC responding by slowing the car by changing the throttle to -1. The car then accelaretes again as the velocity is now lower than the target velocity fed to the MPX.
+
+Car In the turn
+
+![Alt text](/image/priorToCurve?raw=true "Car Inside the Turn")
 ---
 
 ## Dependencies
