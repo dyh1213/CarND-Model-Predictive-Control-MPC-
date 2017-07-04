@@ -41,11 +41,11 @@ In the example below one can see that the turn complexity spikes up priot to the
 
 Car In the turn
 
-![Alt text](/image/priorToCurve.jpg?raw=true "Car Inside the Turn")
+![Alt text](../image/priorToCurve.jpg?raw=true "Car Inside the Turn")
 
 Car Exiting Turn
 
-![Alt text](/image/priorToCurve.jpg?raw=true "Car Exiting Turn")
+![Alt text](../image/priorToCurve.jpg?raw=true "Car Exiting Turn")
 
 ---
 
