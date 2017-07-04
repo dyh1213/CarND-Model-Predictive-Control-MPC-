@@ -41,11 +41,11 @@ In the example below one can see that the turn complexity spikes up priot to the
 
 Car In the turn
 
-![Alt text](../image/priorToCurve.jpg?raw=true "Car Inside the Turn")
+![Alt text](https://raw.githubusercontent.com/dyh1213/CarND-Model-Predictive-Control-MPC-/master/image/priorToCurve.JPG)
 
 Car Exiting Turn
 
-![Alt text](../image/priorToCurve.jpg?raw=true "Car Exiting Turn")
+![Alt text](https://raw.githubusercontent.com/dyh1213/CarND-Model-Predictive-Control-MPC-/master/image/afterTheCurve.JPG)
 
 ---
 
