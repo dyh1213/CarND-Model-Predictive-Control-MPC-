@@ -42,6 +42,7 @@ In the example below one can see that the turn complexity spikes up priot to the
 Car In the turn
 
 ![Alt text](/image/priorToCurve?raw=true "Car Inside the Turn")
+
 ---
 
 ## Dependencies
