@@ -3,6 +3,9 @@ Self-Driving Car Engineer Nanodegree Program
 
 My implementation of the Udacity self-driving car engineer MPC project enables the car to drive up to 100mph smoothly around the track.
 
+You can find a video of the car driving here:
+https://www.youtube.com/watch?v=Bli75D95T3U&feature=youtu.be
+
 A rule based target speed algorithm calculates the complexity of an upcoming turn, and is able to derive when the car should slow its target velocity (prior to the turn), and when its safe to accelerate again (generally out of the turn).
 
 My ouput console lists 3 parameters.
