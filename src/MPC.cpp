@@ -70,12 +70,12 @@ size_t a_start = delta_start + N - 1;
 // most effective.
 //
 const double k_cte           = 1.3;
-const double k_epsi          = 1.3;
+const double k_epsi          = 1.4;
 const double k_v             = 1;
 const double k_throttle      = 1;
 const double k_steering      = 100;
 const double k_dthrottle     = 10000;
-const double k_dsteering     = 2000000;
+const double k_dsteering     = 1000000;
 
 class FG_eval {
 public:

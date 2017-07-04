@@ -1,6 +1,41 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+My implementation of the Udacity self-driving car engineer MPC project enables the car to drive up to 100mph smoothly around the track.
+
+A rule based target speed algorithm calculates the complexity of an upcoming turn, and is able to derive when the car should slow its target velocity (prior to the turn), and when its safe to accelerate again (generally out of the turn).
+
+My ouput console lists 3 parameters.
+
+* The Turn_Complexity which targets the following velocities in the MPC-Project/pull/3
+
+    ```
+	double targetV;
+	if (totalCIS < 2)
+	{
+		targetV = 100;
+	}
+	else if (totalCIS < 3)
+	{
+		targetV = 85;
+	}
+	else if (totalCIS < 4)
+	{
+		targetV = 75;
+	}
+	else if (totalCIS < 15)
+	{
+		targetV = 65;
+	}						
+	else
+	{
+		targetV = 55;
+	}
+    ```
+
+* The throttle which fluctuates between 1 and -1
+
+* The angle
 ---
 
 ## Dependencies
