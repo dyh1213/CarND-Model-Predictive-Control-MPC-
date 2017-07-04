@@ -46,7 +46,6 @@ double dt = .01;       // in seconds
 const double Lf = 2.67;
 
 // Both the reference cross track and orientation errors are 0.
-// The reference velocity is set to 50 mph.
 double ref_cte = 0;
 double ref_epsi = 0;
 
@@ -69,11 +68,13 @@ size_t a_start = delta_start + N - 1;
 // over time, as well as initial changes in steering, were
 // most effective.
 //
+
+//Completely changed parameters to put high focus on correct angle and low steering change.
 const double k_cte           = 1.3;
-const double k_epsi          = 1.4;
+const double k_epsi          = 7;
 const double k_v             = 1;
-const double k_throttle      = 1;
-const double k_steering      = 100;
+const double k_throttle      = 5;
+const double k_steering      = 400;
 const double k_dthrottle     = 10000;
 const double k_dsteering     = 1000000;
 

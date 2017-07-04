@@ -37,7 +37,7 @@ My ouput console lists 3 parameters.
 
 * The angle
 
-In the example below one can see that the turn complexity spikes up priot to the curve, with the MOC responding by slowing the car by changing the throttle to -1. The car then accelaretes again as the velocity is now lower than the target velocity fed to the MPX.
+In the example below one can see that the turn complexity spikes up prior to the curve, with the MOC responding by slowing the car by changing the throttle to -1. The car then accelaretes again as the velocity is now lower than the target velocity fed to the MPC.
 
 Car In the turn
 
@@ -46,6 +46,8 @@ Car In the turn
 Car Exiting Turn
 
 ![Alt text](https://raw.githubusercontent.com/dyh1213/CarND-Model-Predictive-Control-MPC-/master/image/afterTheCurve.JPG)
+
+My parameters were manually tuned. I found that adding a much higher cost to the angle parameter epsi is of much higher importance than the CTE (cross-track-error).
 
 ---
 
