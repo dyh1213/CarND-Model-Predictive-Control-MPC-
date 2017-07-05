@@ -27,13 +27,17 @@ Vehicle Model
 The vehicle model used in this project is based on the kinematic bicycle model. It does not take into account dynamic effects such as inertia, friction and torque. 
 
 It is based on the following variables as given in the class lessons:
-
-	  // x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
-	  // y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
-	  // psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
-	  // v_[t+1] = v[t] + a[t] * dt
-	  // cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
-	  // epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
+	
+	...
+	fg[2 + x_start + i] = x1 - (x0 + v0 * CppAD::cos(psi0) * dt);
+	fg[2 + y_start + i] = y1 - (y0 + v0 * CppAD::sin(psi0) * dt);
+	fg[2 + psi_start + i] = psi1 - (psi0 + v0 * delta0 / Lf * dt);
+	fg[2 + v_start + i] = v1 - (v0 + a0 * dt);
+	fg[2 + cte_start + i] =
+			cte1 - ((f0 - y0) + (v0 * CppAD::sin(epsi0) * dt));
+	fg[2 + epsi_start + i] =
+			epsi1 - ((psi0 - psides0) + v0 * delta0 / Lf * dt);
+	...
 
 Here, x,y denote the position of the car, psi the heading direction, v its velocity cte the cross-track error and epsi the orientation error. Lf is the distance between the center of mass of the vehicle and the front wheels and affects the maneuverability. The vehicle model can be found in the class FG_eval.
 
