@@ -46,14 +46,12 @@ The vehicle model used in this project is based on the kinematic bicycle model. 
 
 It is based on the following variables as given in the class lessons:
 
-    ```
 	  // x_[t+1] = x[t] + v[t] * cos(psi[t]) * dt
 	  // y_[t+1] = y[t] + v[t] * sin(psi[t]) * dt
 	  // psi_[t+1] = psi[t] + v[t] / Lf * delta[t] * dt
 	  // v_[t+1] = v[t] + a[t] * dt
 	  // cte[t+1] = f(x[t]) - y[t] + v[t] * sin(epsi[t]) * dt
 	  // epsi[t+1] = psi[t] - psides[t] + v[t] * delta[t] / Lf * dt
-	```
 
 Here, x,y denote the position of the car, psi the heading direction, v its velocity cte the cross-track error and epsi the orientation error. Lf is the distance between the center of mass of the vehicle and the front wheels and affects the maneuverability. The vehicle model can be found in the class FG_eval.
 
@@ -75,16 +73,16 @@ The simulator coordinates are converted to our vehivle coordinates by calculatin
 	float y_vspace = -r*sin(alpha)
 	```
 The x position and psi is then adjusted to take into account the latency, and sent into the MPC as an initial state vector, along with the coefficients and target velocity.
-	```
-		const double latency = 0.11;  // 110 ms!
-		const double Lf = 2.67;
-		px = v * latency;
-		psi = - v * rho / Lf * latency ;
-		double cte = polyeval(coeffs, px);
-		double epsi = -atan(coeffs[1]);
-		state << px, 0, psi, v, cte, epsi;
-		auto vars = mpc.Solve(state, coeffs, targetV);
-	```
+
+	const double latency = 0.11;  // 110 ms!
+	const double Lf = 2.67;
+	px = v * latency;
+	psi = - v * rho / Lf * latency ;
+	double cte = polyeval(coeffs, px);
+	double epsi = -atan(coeffs[1]);
+	state << px, 0, psi, v, cte, epsi;
+	auto vars = mpc.Solve(state, coeffs, targetV);
+		
 The reason I multiplied by a latency of 0.11 and not 0.10 is because although we model the real world latency by waiting the 100 ms before sending the values to the simulator, the code still has to run and cause some extra latency.
 
 Finally my cost paraters were tuned by hand. I used an improved console printout to see more clearly the results of the MPC (printing throttle and steer angle), and a lot of "cmake .. && make && ./mpc" :)
