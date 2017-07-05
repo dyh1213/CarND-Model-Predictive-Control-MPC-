@@ -146,7 +146,7 @@ int main() {
 					auto coeffs = polyfit(pts_x, pts_y, 2);   // Fit a quadratic guide wire
 
 					// Account for latency
-					const double latency = 0.1;  // 100 ms
+					const double latency = 0.11;  // 100 ms
 					const double Lf = 2.67;
 					px = v * latency;
 					psi = - v * rho / Lf * latency ;
@@ -166,27 +166,12 @@ int main() {
 					// Choose our throttle and steering angle by finding an optimal
 					// number of settings over the next few seconds, based on simulating
 					// our vehicle and how it will likely move forward kinematically.
+					if (totalCIS > 20)
+					{
+						totalCIS = 20;
+					}
 					double targetV;
-					if (totalCIS < 2)
-					{
-						targetV = 100;
-					}
-					else if (totalCIS < 3)
-					{
-						targetV = 85;
-					}
-					else if (totalCIS < 4)
-					{
-						targetV = 75;
-					}
-					else if (totalCIS < 15)
-					{
-						targetV = 65;
-					}						
-					else
-					{
-						targetV = 55;
-					}
+					targetV = 80 - (totalCIS * 2);
 					auto vars = mpc.Solve(state, coeffs, targetV);
 
 					// Store our actuators in JSON to fire them off via a websocket
@@ -201,6 +186,8 @@ int main() {
 					std::cout
 					<< "Turn_Complexity: "
 					<< totalCIS 
+					<< " Target velocity: "
+					<< targetV 
 					<< " Throttle: "
 					<< vars[0] 
 					<< " Steer angle: "

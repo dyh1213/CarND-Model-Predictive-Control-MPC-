@@ -29,8 +29,8 @@
 using CppAD::AD;
 
 // We set the number of timesteps to 100 and the time
-// step to 10 milliseconds.
-size_t N = 100;        // max iterations
+// step to 100 milliseconds.
+size_t N = 50;        // max iterations
 double dt = .01;       // in seconds
 
 // This value assumes the model presented in the classroom is used.
