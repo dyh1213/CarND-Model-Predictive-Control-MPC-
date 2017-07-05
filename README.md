@@ -89,7 +89,7 @@ The reason I multiplied by a latency of 0.11 and not 0.10 is because although we
 
 Finally my cost paraters were tuned by hand. I used an improved console printout to see more clearly the results of the MPC (printing throttle and steer angle), and a lot of "cmake .. && make && ./mpc" :)
 
-
+Note: I can improve this project by modelling my speed controls into the MPC's cost function. However, at this time I still havent got this working well.
 	
 Car In the turn
 
