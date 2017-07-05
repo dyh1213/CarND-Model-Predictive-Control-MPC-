@@ -14,26 +14,8 @@ My ouput console lists 3 parameters.
 
     ```
 	double targetV;
-	if (totalCIS < 2)
-	{
-		targetV = 100;
-	}
-	else if (totalCIS < 3)
-	{
-		targetV = 85;
-	}
-	else if (totalCIS < 4)
-	{
-		targetV = 75;
-	}
-	else if (totalCIS < 15)
-	{
-		targetV = 65;
-	}						
-	else
-	{
-		targetV = 55;
-	}
+	targetV = 80 - (totalCIS * 2);
+	auto vars = mpc.Solve(state, coeffs, targetV)
     ```
 
 * The throttle which fluctuates between 1 and -1
@@ -86,6 +68,18 @@ The x position and psi is then adjusted to take into account the latency, and se
 The reason I multiplied by a latency of 0.11 and not 0.10 is because although we model the real world latency by waiting the 100 ms before sending the values to the simulator, the code still has to run and cause some extra latency.
 
 Finally my cost paraters were tuned by hand. I used an improved console printout to see more clearly the results of the MPC (printing throttle and steer angle), and a lot of "cmake .. && make && ./mpc" :)
+
+The final parmeters chosen
+
+	...
+	const double k_cte           = 1.3;
+	const double k_epsi          = 7;
+	const double k_v             = 1;
+	const double k_throttle      = 5;
+	const double k_steering      = 400;
+	const double k_dthrottle     = 10000;
+	const double k_dsteering     = 1000000;
+	...
 
 Note: I can improve this project by modelling my speed controls into the MPC's cost function. However, at this time I still havent got this working well.
 	
