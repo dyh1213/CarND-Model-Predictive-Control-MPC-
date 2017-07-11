@@ -115,10 +115,6 @@ int main() {
 					const double throttle = j[1]["throttle"];
 					const double a = throttle; 
 
-												   //**************************************************************
-												   //* CONVERT TO DELAYED STATE
-												   //**************************************************************
-
 					const double delay = 0.1; //ms
 					const double Lf = 2.67;
 
@@ -127,10 +123,6 @@ int main() {
 					const double delayed_py = py + speed_mph * sin(psi) * delay;
 					const double delayed_psi = psi + (speed_mph * tan(-delta) / Lf) * delay + ((a * tan(-delta) / (2 * Lf)) * pow(delay, 2));
 					const double delayed_v = speed_mph + a * delay;
-
-					//**************************************************************
-					//* TRANSFORM WAYPOINTS INTO VEHICLE SYSTEM
-					//**************************************************************
 
 					Eigen::MatrixXd waypoints = transformGlobalToLocal(delayed_px, delayed_py, delayed_psi, points_xs, points_ys);
 					Eigen::VectorXd waypoints_xs = waypoints.row(0);
