@@ -11,6 +11,8 @@ A rule based target speed algorithm calculates the complexity of an upcoming tur
 My ouput console lists 3 parameters.
 
 * The Turn_Complexity which targets the following velocities in the MPC
+	
+	Note: this code section was removed for now as I needed to make some changes before the project deadline :(
 
     ```
 	double targetV;
@@ -45,6 +47,19 @@ Latency
 
 The latency problem is solved by assuming the car will drive at the current speed and direction before receiving any control input from the MPC by simply sleeping the thread before sending to the simulator (main.cpp line 240 - his_thread::sleep_for(chrono::milliseconds(100));)
 
+The car input data is adjusted to this latenct by calculating the future x,y,psi, and velocity after the 100ms assuming all other things stay the same.
+
+	...
+	const double delay = 0.1; //ms
+	const double Lf = 2.67;
+
+	//Using the kinematic model
+	const double delayed_px = px + speed_mph * cos(psi) * delay;
+	const double delayed_py = py + speed_mph * sin(psi) * delay;
+	const double delayed_psi = psi + (speed_mph * tan(-delta) / Lf) * delay + ((a * tan(-delta) / (2 * Lf)) * pow(delay, 2));
+	const double delayed_v = speed_mph + a * delay;
+	...
+
 Dt & N
 
 Through manual testing I found that a tighter (in my case 0.01 = 10ms) results in better results than a longer N (in my case 50). In comparison to the real world, it is better to perfect your current action then set up for an optimal action in the future. My car plots its best path for a mere 0.5 seconds ahead.
@@ -53,23 +68,21 @@ In the example below one can see that the turn complexity spikes up prior to the
 
 Preprocessing and Polynomial Fitting
 
-The simulator coordinates are converted to our vehivle coordinates by calculating the distance from the original point to the current point, and then angle in the simulator space and converting it to vehicle space. Finally the angle (alpha) and distrace (r) is used to create the x_vspace and y_vspace variables.
-	```
-	float x_vspace = r*cos(alpha);
-	float y_vspace = -r*sin(alpha)
-	```
-The x position and psi is then adjusted to take into account the latency, and sent into the MPC as an initial state vector, along with the coefficients and target velocity.
+The simulator coordinates are converted to our vehicle coordinates by calculating the distance from the original point to the current point, and then angle in the simulator space and converting it to vehicle space.
 
-	const double latency = 0.11;  // 110 ms!
-	const double Lf = 2.67;
-	px = v * latency;
-	psi = - v * rho / Lf * latency ;
-	double cte = polyeval(coeffs, px);
-	double epsi = -atan(coeffs[1]);
-	state << px, 0, psi, v, cte, epsi;
-	auto vars = mpc.Solve(state, coeffs, targetV);
-		
-The reason I multiplied by a latency of 0.11 and not 0.10 is because although we model the real world latency by waiting the 100 ms before sending the values to the simulator, the code still has to run and cause some extra latency.
+	...
+	assert(ptsx.size() == ptsy.size());
+	unsigned len = ptsx.size();
+
+	auto waypoints = Eigen::MatrixXd(2, len);
+
+	for (auto i = 0; i < len; ++i) {
+		waypoints(0, i) = cos(psi) * (ptsx[i] - x) + sin(psi) * (ptsy[i] - y);
+		waypoints(1, i) = -sin(psi) * (ptsx[i] - x) + cos(psi) * (ptsy[i] - y);
+	}
+
+	return waypoints;
+	...
 
 Finally my cost paraters were tuned by hand. I used an improved console printout to see more clearly the results of the MPC (printing throttle and steer angle), and a lot of "cmake .. && make && ./mpc" :)
 

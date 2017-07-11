@@ -8,6 +8,7 @@
 #include "Eigen-3.3/Eigen/QR"
 #include "MPC.h"
 #include "json.hpp"
+#include <iomanip>
 
 // for convenience
 using json = nlohmann::json;
@@ -26,7 +27,8 @@ string hasData(string s) {
 	auto b2 = s.rfind("}]");
 	if (found_null != string::npos) {
 		return "";
-	} else if (b1 != string::npos && b2 != string::npos) {
+	}
+	else if (b1 != string::npos && b2 != string::npos) {
 		return s.substr(b1, b2 - b1 + 2);
 	}
 	return "";
@@ -41,11 +43,26 @@ double polyeval(Eigen::VectorXd coeffs, double x) {
 	return result;
 }
 
+Eigen::MatrixXd transformGlobalToLocal(double x, double y, double psi, const vector<double> & ptsx, const vector<double> & ptsy) {
+
+	assert(ptsx.size() == ptsy.size());
+	unsigned len = ptsx.size();
+
+	auto waypoints = Eigen::MatrixXd(2, len);
+
+	for (auto i = 0; i < len; ++i) {
+		waypoints(0, i) = cos(psi) * (ptsx[i] - x) + sin(psi) * (ptsy[i] - y);
+		waypoints(1, i) = -sin(psi) * (ptsx[i] - x) + cos(psi) * (ptsy[i] - y);
+	}
+
+	return waypoints;
+}
+
 // Fit a polynomial.
 // Adapted from
 // https://github.com/JuliaMath/Polynomials.jl/blob/master/src/Polynomials.jl#L676-L716
 Eigen::VectorXd polyfit(Eigen::VectorXd xvals, Eigen::VectorXd yvals,
-		int order) {
+	int order) {
 	assert(xvals.size() == yvals.size());
 	assert(order >= 1 && order <= xvals.size() - 1);
 	Eigen::MatrixXd A(xvals.size(), order + 1);
@@ -72,7 +89,7 @@ int main() {
 	MPC mpc;
 
 	h.onMessage([&mpc](uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
-			uWS::OpCode opCode) {
+		uWS::OpCode opCode) {
 		// "42" at the start of the message means there's a websocket message event.
 		// The 4 signifies a websocket message
 		// The 2 signifies a websocket event
@@ -87,73 +104,52 @@ int main() {
 					double maxTargetVelocity = 90;
 					// Extract location data and guide points,
 					// converting from global to vehicle coordinates.
-					vector<double> ptsx = j[1]["ptsx"]; // global coordinates
-					vector<double> ptsy = j[1]["ptsy"];
-					const int n = ptsx.size();
-					double px = j[1]["x"];
-					double py = j[1]["y"];
-					double psi = j[1]["psi"];
-					
-					//Transformation of global coordinates in simulator to vehicle coordinate space
-					Eigen::VectorXd pts_x(n);  // vehicle coordinates
-					Eigen::VectorXd pts_y(n);
-					float totalCIS = 0;
-					float prev_x_vspace = 0;
-					float prev_y_vspace = 0;
-					float prev_slope = 0;
-					
-					for (int i=0; i < n; i++) {
-						float dx = ptsx[i] - px;
-						float dy = ptsy[i] - py;
-						float r = sqrt(dx*dx + dy*dy); // distance r to the point from vehicle
-						float beta = atan2(-dy, dx);  // angle of vector in global space
-						float alpha = beta+psi;       // angle of vector in vehicle space
-						
-						float x_vspace = r*cos(alpha);
-						float y_vspace = -r*sin(alpha);
-						
-						//The section below calculates the upcoming turn complexity for rule based throttle adjustment
-						//Based on an increasing change in clope between vehincle space points over points
-						//The further the points the stronger the change in slope is factored in. 
-						if (i>0)
-						{
-							//Real slope between each two data points
-							float slope = (y_vspace-prev_y_vspace)/(x_vspace-prev_x_vspace);
-							//Slope change between this point and last point
-							float slopeChange = slope-prev_slope;
-							//CIS = change in slope squared to neglect direction + power by the index of the points
-							//to make further points factor in stronger. This ensures slowing before the curves
-							//and accelarating out of the turn. 
-							float cis = pow(slopeChange,2) * pow(i,2);
-							totalCIS = totalCIS + cis;
-							prev_slope = slope;
-						}
-						prev_x_vspace = x_vspace;
-						prev_y_vspace = y_vspace;
-						pts_x[i] = x_vspace;     // x, vehicle space
-						pts_y[i] = y_vspace;   // y, vehicle space
-					}
+					std::vector<double> points_xs = j[1]["ptsx"];
+					std::vector<double> points_ys = j[1]["ptsy"];
 
+					const double px = j[1]["x"];
+					const double py = j[1]["y"];
+					const double psi = j[1]["psi"];
+					const double speed_mph = j[1]["speed"]; 
+					const double delta = j[1]["steering_angle"]; 
+					const double throttle = j[1]["throttle"];
+					const double a = throttle; 
+
+												   //**************************************************************
+												   //* CONVERT TO DELAYED STATE
+												   //**************************************************************
+
+					const double delay = 0.1; //ms
+					const double Lf = 2.67;
+
+					//Using the kinematic model
+					const double delayed_px = px + speed_mph * cos(psi) * delay;
+					const double delayed_py = py + speed_mph * sin(psi) * delay;
+					const double delayed_psi = psi + (speed_mph * tan(-delta) / Lf) * delay + ((a * tan(-delta) / (2 * Lf)) * pow(delay, 2));
+					const double delayed_v = speed_mph + a * delay;
+
+					//**************************************************************
+					//* TRANSFORM WAYPOINTS INTO VEHICLE SYSTEM
+					//**************************************************************
+
+					Eigen::MatrixXd waypoints = transformGlobalToLocal(delayed_px, delayed_py, delayed_psi, points_xs, points_ys);
+					Eigen::VectorXd waypoints_xs = waypoints.row(0);
+					Eigen::VectorXd waypoints_ys = waypoints.row(1);
+
+					const int n = points_xs.size();
 					// Extract dynamic information and create our state
 					// vector.  Account for latency by advancing the car along the current
 					// speed and turning angle.  C
-					
+
 					//compute cross-track error and our
 					// desired turning angle.
 					Eigen::VectorXd state(6);
-					double v = j[1]["speed"];
-					double rho = j[1]["steering_angle"];
-					auto coeffs = polyfit(pts_x, pts_y, 2);   // Fit a quadratic guide wire
 
-					// Account for latency
-					const double latency = 0.11;  // 100 ms
-					const double Lf = 2.67;
-					px = v * latency;
-					psi = - v * rho / Lf * latency ;
+					auto coeffs = polyfit(waypoints_xs, waypoints_ys, 2);   // Fit a quadratic guide wire
 
 					// Compute cross track error as the y where we're supposed to be,
 					// in local coordinates, minus our current y, 0, or the origin.
-					double cte = polyeval(coeffs, px);
+					double cte = polyeval(coeffs, delayed_px);
 
 					// Estimate our desired steering angle as the angle of a line
 					// tangent to the start of our guideware curve.
@@ -161,49 +157,43 @@ int main() {
 
 					// Store everything in an initial state, which we'll then
 					// use a model to project forward in time.
-					state << px, 0, psi, v, cte, epsi;
+					state << 0, 0, 0, delayed_v, cte, epsi;
 
 					// Choose our throttle and steering angle by finding an optimal
 					// number of settings over the next few seconds, based on simulating
 					// our vehicle and how it will likely move forward kinematically.
-					if (totalCIS > 20)
-					{
-						totalCIS = 20;
-					}
-					double targetV;
-					targetV = 80 - (totalCIS * 2);
-					auto vars = mpc.Solve(state, coeffs, targetV);
+					auto vars = mpc.Solve(state, coeffs, 50);
 
 					// Store our actuators in JSON to fire them off via a websocket
 					// back into the simulator engine.
 					json msgJson;
-					
+
 					msgJson["throttle"] = vars[0];
-					double angle = -vars[1]/deg2rad(25.0);
+					double angle = -vars[1] / deg2rad(25.0);
 					msgJson["steering_angle"] = angle;
-					
+
 					std::cout << std::setprecision(2) << std::fixed;
 					std::cout
-					<< "Turn_Complexity: "
-					<< totalCIS 
-					<< " Target velocity: "
-					<< targetV 
-					<< " Throttle: "
-					<< vars[0] 
-					<< " Steer angle: "
-					<< angle 
-					<<std::endl;
-					
+						<< "Turn_Complexity: "
+						<< 80
+						<< " Target velocity: "
+						<< 80
+						<< " Throttle: "
+						<< vars[0]
+						<< " Steer angle: "
+						<< angle
+						<< std::endl;
+
 					// Add our predicted trajectory, in green
-					const int npts = (int) vars[2];
+					const int npts = (int)vars[2];
 					vector<double> mpc_x_vals(npts);
 					vector<double> mpc_y_vals(npts);
 
 					// Points are in reference to the vehicle's coordinate system
 					// the points in the simulator are connected by a Green line
-					for (int i=0; i < npts; i++) {
-						mpc_x_vals[i] = vars[i*2+3];
-						mpc_y_vals[i] = vars[i*2+4];
+					for (int i = 0; i < npts; i++) {
+						mpc_x_vals[i] = vars[i * 2 + 3];
+						mpc_y_vals[i] = vars[i * 2 + 4];
 						//
 						// Uncomment this line to see our guidewire instead of our
 						// predicted path forward.
@@ -217,10 +207,10 @@ int main() {
 					// Display the waypoints/reference line in yellow
 					vector<double> next_x_vals(n);
 					vector<double> next_y_vals(n);
-					for (int i=0; i < n; i++) {
-						double x = pts_x[i];
+					for (int i = 0; i < n; i++) {
+						double x = points_xs[i];
 						next_x_vals[i] = x;
-						next_y_vals[i] = pts_y[i];
+						next_y_vals[i] = points_ys[i];
 					}
 					msgJson["next_x"] = next_x_vals;
 					msgJson["next_y"] = next_y_vals;
@@ -240,7 +230,8 @@ int main() {
 					this_thread::sleep_for(chrono::milliseconds(100));
 					ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
 				}
-			} else {
+			}
+			else {
 				// Manual driving
 				std::string msg = "42[\"manual\",{}]";
 				ws.send(msg.data(), msg.length(), uWS::OpCode::TEXT);
@@ -252,11 +243,12 @@ int main() {
 	// program
 	// doesn't compile :-(
 	h.onHttpRequest([](uWS::HttpResponse *res, uWS::HttpRequest req, char *data,
-			size_t, size_t) {
+		size_t, size_t) {
 		const std::string s = "<h1>Hello world!</h1>";
 		if (req.getUrl().valueLength == 1) {
 			res->end(s.data(), s.length());
-		} else {
+		}
+		else {
 			// i guess this should be done more gracefully?
 			res->end(nullptr, 0);
 		}
@@ -267,7 +259,7 @@ int main() {
 	});
 
 	h.onDisconnection([&h](uWS::WebSocket<uWS::SERVER> ws, int code,
-			char *message, size_t length) {
+		char *message, size_t length) {
 		ws.close();
 		std::cout << "Disconnected" << std::endl;
 	});
@@ -275,7 +267,8 @@ int main() {
 	int port = 4567;
 	if (h.listen(port)) {
 		std::cout << "Listening to port " << port << std::endl;
-	} else {
+	}
+	else {
 		std::cerr << "Failed to listen to port" << std::endl;
 		return -1;
 	}
