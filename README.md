@@ -89,13 +89,13 @@ Finally my cost paraters were tuned by hand. I used an improved console printout
 The final parmeters chosen
 
 	...
-	const double k_cte           = 1.3;
-	const double k_epsi          = 7;
+	const double k_cte           = 2;
+	const double k_epsi          = 1;
 	const double k_v             = 1;
 	const double k_throttle      = 5;
-	const double k_steering      = 400;
-	const double k_dthrottle     = 10000;
-	const double k_dsteering     = 1000000;
+	const double k_steering      = 2500;
+	const double k_dthrottle     = 10;
+	const double k_dsteering     = 5000;
 	...
 
 Note: I can improve this project by modelling my speed controls into the MPC's cost function. However, at this time I still havent got this working well.

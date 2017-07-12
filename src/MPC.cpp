@@ -30,8 +30,8 @@ using CppAD::AD;
 
 // We set the number of timesteps to 100 and the time
 // step to 100 milliseconds.
-size_t N = 50;        // max iterations
-double dt = .01;       // in seconds
+size_t N = 15;        // max iterations
+double dt = .1;       // in seconds
 
 // This value assumes the model presented in the classroom is used.
 //
@@ -70,13 +70,13 @@ size_t a_start = delta_start + N - 1;
 //
 
 //Completely changed parameters to put high focus on correct angle and low steering change.
-const double k_cte           = 1.3;
-const double k_epsi          = 7;
+const double k_cte           = 2;
+const double k_epsi          = 1;
 const double k_v             = 1;
 const double k_throttle      = 5;
-const double k_steering      = 400;
-const double k_dthrottle     = 10000;
-const double k_dsteering     = 1000000;
+const double k_steering      = 2500;
+const double k_dthrottle     = 10;
+const double k_dsteering     = 5000;
 
 class FG_eval {
 public:
@@ -154,7 +154,7 @@ public:
 			AD<double> a0 = vars[a_start + i];
 			//Use of second order coefficients taken from the work of Deborah-Digges(github)
 			AD<double> f0 = coeffs[0] + coeffs[1] * x0 + coeffs[2] * x0 * x0;
-			AD<double> psides0 = CppAD::atan(coeffs[1]+coeffs[2]*x0*x0);
+			AD<double> psides0 = CppAD::atan(coeffs[1] + 2 * coeffs[2] * x0);
 
 			//
 			// We constrain our values in the next timestep (+ i)

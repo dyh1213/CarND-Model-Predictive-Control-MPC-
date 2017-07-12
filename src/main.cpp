@@ -110,7 +110,8 @@ int main() {
 					const double px = j[1]["x"];
 					const double py = j[1]["y"];
 					const double psi = j[1]["psi"];
-					const double speed_mph = j[1]["speed"]; 
+					const double speed_mpht = j[1]["speed"]; // -> m/s
+					const double speed_mph = speed_mpht * 0.44704;
 					const double delta = j[1]["steering_angle"]; 
 					const double throttle = j[1]["throttle"];
 					const double a = throttle; 
@@ -122,6 +123,7 @@ int main() {
 					const double delayed_px = px + speed_mph * cos(psi) * delay;
 					const double delayed_py = py + speed_mph * sin(psi) * delay;
 					const double delayed_psi = psi + (speed_mph * tan(-delta) / Lf) * delay + ((a * tan(-delta) / (2 * Lf)) * pow(delay, 2));
+					//const double delayed_psi = psi + (speed_mph / Lf) * delta * delay;
 					const double delayed_v = speed_mph + a * delay;
 
 					Eigen::MatrixXd waypoints = transformGlobalToLocal(delayed_px, delayed_py, delayed_psi, points_xs, points_ys);
@@ -139,22 +141,13 @@ int main() {
 
 					auto coeffs = polyfit(waypoints_xs, waypoints_ys, 2);   // Fit a quadratic guide wire
 
-					// Compute cross track error as the y where we're supposed to be,
-					// in local coordinates, minus our current y, 0, or the origin.
 					double cte = polyeval(coeffs, delayed_px);
 
-					// Estimate our desired steering angle as the angle of a line
-					// tangent to the start of our guideware curve.
 					double epsi = -atan(coeffs[1]);
 
-					// Store everything in an initial state, which we'll then
-					// use a model to project forward in time.
 					state << 0, 0, 0, delayed_v, cte, epsi;
 
-					// Choose our throttle and steering angle by finding an optimal
-					// number of settings over the next few seconds, based on simulating
-					// our vehicle and how it will likely move forward kinematically.
-					auto vars = mpc.Solve(state, coeffs, 50);
+					auto vars = mpc.Solve(state, coeffs, 30);
 
 					// Store our actuators in JSON to fire them off via a websocket
 					// back into the simulator engine.
@@ -196,16 +189,20 @@ int main() {
 					msgJson["mpc_x"] = mpc_x_vals;
 					msgJson["mpc_y"] = mpc_y_vals;
 
-					// Display the waypoints/reference line in yellow
-					vector<double> next_x_vals(n);
-					vector<double> next_y_vals(n);
-					for (int i = 0; i < n; i++) {
-						double x = points_xs[i];
-						next_x_vals[i] = x;
-						next_y_vals[i] = points_ys[i];
-					}
-					msgJson["next_x"] = next_x_vals;
-					msgJson["next_y"] = next_y_vals;
+				  //Display the waypoints/reference line
+				  vector<double> next_x_vals;
+				  vector<double> next_y_vals;
+
+				  //.. add (x,y) points to list here, points are in reference to the vehicle's coordinate system
+				  // the points in the simulator are connected by a Yellow line
+
+				  for (double i = 3; i < 50; i += 3){
+					next_x_vals.push_back(i);
+					next_y_vals.push_back(polyeval(coeffs, i));
+				  }
+
+				  msgJson["next_x"] = next_x_vals;
+				  msgJson["next_y"] = next_y_vals;
 
 
 					auto msg = "42[\"steer\"," + msgJson.dump() + "]";
