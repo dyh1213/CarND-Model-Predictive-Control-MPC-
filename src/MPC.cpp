@@ -300,13 +300,6 @@ vector<double> MPC::Solve(Eigen::VectorXd state, Eigen::VectorXd coeffs, double 
 	auto cost = solution.obj_value;
 	//std::cout << "Cost " << cost << std::endl;
 
-	//  Return the first actuator values, the number N of timesteps
-	//  we projected forward, then the (x,y) pairs for all N steps
-	//  forward in one consecutive vector.
-	//
-	//  Here's where I miss Python.
-	//
-
 	vector<double> result;
 
 	result.push_back(solution.x[a_start]);
