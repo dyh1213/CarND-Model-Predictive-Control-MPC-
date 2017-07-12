@@ -110,8 +110,8 @@ int main() {
 					const double px = j[1]["x"];
 					const double py = j[1]["y"];
 					const double psi = j[1]["psi"];
-					const double speed_mpht = j[1]["speed"]; // -> m/s
-					const double speed_mph = speed_mpht * 0.44704;
+					const double speed_mph = j[1]["speed"]; // 
+					const double speed_mps = speed_mph * 0.44704; //-> m/s
 					const double delta = j[1]["steering_angle"]; 
 					const double throttle = j[1]["throttle"];
 					const double a = throttle; 
@@ -120,11 +120,11 @@ int main() {
 					const double Lf = 2.67;
 
 					//Using the kinematic model
-					const double delayed_px = px + speed_mph * cos(psi) * delay;
-					const double delayed_py = py + speed_mph * sin(psi) * delay;
-					const double delayed_psi = psi + (speed_mph * tan(-delta) / Lf) * delay + ((a * tan(-delta) / (2 * Lf)) * pow(delay, 2));
-					//const double delayed_psi = psi + (speed_mph / Lf) * delta * delay;
-					const double delayed_v = speed_mph + a * delay;
+					const double delayed_px = px + speed_mps * cos(psi) * delay;
+					const double delayed_py = py + speed_mps * sin(psi) * delay;
+					const double delayed_psi = psi + (speed_mps * tan(-delta) / Lf) * delay + ((a * tan(-delta) / (2 * Lf)) * pow(delay, 2));
+					//const double delayed_psi = psi + (speed_mps / Lf) * delta * delay;
+					const double delayed_v = speed_mps + a * delay;
 
 					Eigen::MatrixXd waypoints = transformGlobalToLocal(delayed_px, delayed_py, delayed_psi, points_xs, points_ys);
 					Eigen::VectorXd waypoints_xs = waypoints.row(0);
